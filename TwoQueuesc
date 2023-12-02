@@ -1,0 +1,98 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_SIZE 10
+
+typedef struct {
+    int items[MAX_SIZE];
+    int front, rear;
+} Queue;
+
+// Function prototypes
+void initialize(Queue *queue);
+void addQ(Queue *queue, int value, int queueNumber);
+int delQ(Queue *queue, int queueNumber);
+void displayQueue(Queue *queue, int queueNumber);
+
+int main() {
+    Queue queues[2];
+    initialize(&queues[0]);
+    initialize(&queues[1]);
+
+    // Example operations on two queues
+    addQ(&queues[0], 10, 1);  // Add to queue 1
+    addQ(&queues[1], 20, 2);  // Add to queue 2
+    addQ(&queues[0], 30, 1);  // Add to queue 1
+    displayQueue(&queues[0], 1);
+    displayQueue(&queues[1], 2);
+
+    delQ(&queues[0], 1);  // Delete from queue 1
+    displayQueue(&queues[0], 1);
+
+    addQ(&queues[1], 40, 2);  // Add to queue 2
+    displayQueue(&queues[1], 2);
+
+    return 0;
+}
+
+void initialize(Queue *queue) {
+    queue->front = -1;
+    queue->rear = -1;
+}
+
+void addQ(Queue *queue, int value, int queueNumber) {
+    if ((queueNumber == 1 && queue->rear == MAX_SIZE - 1) || (queueNumber == 2 && queue->rear == MAX_SIZE / 2 - 1)) {
+        printf("Queue %d is full. Cannot add.\n", queueNumber);
+        return;
+    }
+
+    if (queue->front == -1) {
+        // Empty queue, set front to 0
+        queue->front = 0;
+    }
+
+    if (queueNumber == 1) {
+        queue->items[++queue->rear] = value;
+    } else if (queueNumber == 2) {
+        queue->items[MAX_SIZE / 2 + (++queue->rear)] = value;
+    }
+
+    printf("Added %d to Queue %d.\n", value, queueNumber);
+}
+
+int delQ(Queue *queue, int queueNumber) {
+    if (queue->front == -1 || (queueNumber == 1 && queue->front > queue->rear) || (queueNumber == 2 && queue->front > (MAX_SIZE / 2 + queue->rear))) {
+        printf("Queue %d is empty. Cannot delete.\n", queueNumber);
+        exit(EXIT_FAILURE);
+    }
+
+    int deletedValue;
+    if (queueNumber == 1) {
+        deletedValue = queue->items[queue->front++];
+    } else if (queueNumber == 2) {
+        deletedValue = queue->items[MAX_SIZE / 2 + queue->front++];
+    }
+
+    printf("Deleted %d from Queue %d.\n", deletedValue, queueNumber);
+    return deletedValue;
+}
+
+void displayQueue(Queue *queue, int queueNumber) {
+    if (queue->front == -1 || (queueNumber == 1 && queue->front > queue->rear) || (queueNumber == 2 && queue->front > (MAX_SIZE / 2 + queue->rear))) {
+        printf("Queue %d is empty.\n", queueNumber);
+        return;
+    }
+
+    printf("Queue %d: ", queueNumber);
+    if (queueNumber == 1) {
+        for (int i = queue->front; i <= queue->rear; ++i) {
+            printf("%d ", queue->items[i]);
+        }
+    } else if (queueNumber == 2) {
+        for (int i = MAX_SIZE / 2 + queue->front; i <= MAX_SIZE / 2 + queue->rear; ++i) {
+            printf("%d ", queue->items[i]);
+        }
+    }
+
+    printf("\n");
+}
