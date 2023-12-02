@@ -1,97 +1,172 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <limits.h>
+#include <stdlib.h>
 
-#define MAX_EXPR_SIZE 100
+#define MAX 100
 
-// Function to return precedence of operators
-int precedence(char operator) {
-    switch (operator) {
+int top = -1;
+char stack[MAX];
+
+// checking if stack is full
+int isFull()
+{
+    return top == MAX - 1;
+}
+
+// checking is stack is empty
+int isEmpty()
+{
+    return top == -1;
+}
+
+void push(char item)
+{
+    if (isFull())
+        return;
+    top++;
+    stack[top] = item;
+}
+
+// Function to remove an item from stack.  It decreases top by 1
+int pop()
+{
+    if (isEmpty())
+        return INT_MIN;
+
+    // decrements top and returns what has been popped
+    return stack[top--];
+}
+
+// Function to return the top from stack without removing it
+int peek()
+{
+    if (isEmpty())
+        return INT_MIN;
+    return stack[top];
+}
+
+// A utility function to check if the given character is operand
+int checkIfOperand(char ch)
+{
+    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
+}
+
+// Fucntion to compare precedence
+// If we return larger value means higher precedence
+int precedence(char ch)
+{
+    switch (ch)
+    {
     case '+':
     case '-':
         return 1;
+
     case '*':
     case '/':
         return 2;
+
     case '^':
         return 3;
-    default:
-        return -1;
     }
+    return -1;
 }
 
-// Function to check if the scanned character 
-// is an operator
-int isOperator(char ch) {
-    return (ch == '+' || ch == '-' || ch == '*' || ch == '/'
-            || ch == '^');
-}
-
-// Main function to convert infix expression
-// to postfix expression
-char* infixToPostfix(char* infix) {
+// The driver function for infix to postfix conversion
+int getPostfix(char *expression)
+{
     int i, j;
-    int len = strlen(infix);
-    char* postfix = (char*)malloc(sizeof(char) * (len + 1)); // Allocate space for null terminator
-    char stack[MAX_EXPR_SIZE];
-    int top = -1;
 
-    for (i = 0, j = 0; i < len; i++) {
-        if (infix[i] == ' ' || infix[i] == '\t')
-            continue;
+    for (i = 0, j = -1; expression[i]; ++i)
+    {
 
-        // If the scanned character is operand
-        // add it to the postfix expression
-        if (isalnum(infix[i])) {
-            postfix[j++] = infix[i];
+        if (checkIfOperand(expression[i]))
+            expression[++j] = expression[i];
+
+        else if (expression[i] == '(')
+            push(expression[i]);
+
+        else if (expression[i] == ')')
+        {
+
+            while (!isEmpty(stack) && peek(stack) != '(')
+                expression[++j] = pop(stack);
+            if (!isEmpty(stack) && peek(stack) != '(')
+                return -1; // invalid expression
+            else
+                pop(stack);
         }
-
-        // if the scanned character is '('
-        // push it in the stack
-        else if (infix[i] == '(') {
-            stack[++top] = infix[i];
-        }
-
-        // if the scanned character is ')'
-        // pop the stack and add it to the 
-        // output string until empty or '(' found
-        else if (infix[i] == ')') {
-            while (top > -1 && stack[top] != '(')
-                postfix[j++] = stack[top--];
-
-            top--;
-        }
-
-        // If the scanned character is an operator
-        // push it in the stack
-        else if (isOperator(infix[i])) {
-            while (top > -1
-                && precedence(stack[top])
-                >= precedence(infix[i]))
-                postfix[j++] = stack[top--];
-            stack[++top] = infix[i];
+        else // if an opertor
+        {
+            while (!isEmpty(stack) && precedence(expression[i]) <= precedence(peek(stack)))
+                expression[++j] = pop(stack);
+            push(expression[i]);
         }
     }
 
-    // Pop all remaining elements from the stack
-    while (top > -1) {
-        if (stack[top] == '(') {
-            free(postfix);
-            return "Invalid Expression";
-        }
-        postfix[j++] = stack[top--];
-    }
-    postfix[j] = '\0'; // Add null terminator
-    return postfix;
+    // Once all inital expression characters are traversed
+    // adding all left elements from stack to exp
+    while (!isEmpty(stack))
+        expression[++j] = pop(stack);
+
+    expression[++j] = '\0';
 }
 
-// Driver code
-int main() {
-    char infix[MAX_EXPR_SIZE] = "a+b*(c^d-e)^(f+g*h)-i";
+void reverse(char *exp)
+{
 
-    // Function call
-    char* postfix = infixToPostfix(infix);
-    printf("%s\n", postfix);
-    free(postfix); // Don't forget to free the allocated memory
+    int size = strlen(exp);
+    int j = size, i = 0;
+    char temp[size];
+
+    temp[j--] = '\0';
+    while (exp[i] != '\0')
+    {
+        temp[j] = exp[i];
+        j--;
+        i++;
+    }
+    strcpy(exp, temp);
+}
+
+void brackets(char *exp)
+{
+    int i = 0;
+    while (exp[i] != '\0')
+    {
+        if (exp[i] == '(')
+            exp[i] = ')';
+        else if (exp[i] == ')')
+            exp[i] = '(';
+        i++;
+    }
+}
+
+void InfixtoPrefix(char *exp)
+{
+
+    int size = strlen(exp);
+
+    // reverse string
+    reverse(exp);
+    // change brackets
+    brackets(exp);
+    // get postfix
+    getPostfix(exp);
+    // reverse string again
+    reverse(exp);
+}
+
+int main()
+{
+    printf("The infix is: ");
+
+    char expression[] = "((a/b)+c)-(d+(e*f))";
+    printf("%s\n", expression);
+    InfixtoPrefix(expression);
+
+    printf("The prefix is: ");
+    printf("%s\n", expression);
+
     return 0;
 }
